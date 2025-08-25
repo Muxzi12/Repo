@@ -58,14 +58,19 @@ export function LaunchTokenForm() {
 
     setLoadingBalance(true)
     try {
-      const connection = new Connection("https://api.mainnet-beta.solana.com")
+      const connection = new Connection("https://api.devnet.solana.com", {
+        commitment: "confirmed",
+        confirmTransactionInitialTimeout: 60000,
+      })
       const balance = await connection.getBalance(publicKey)
       setSolBalance(balance / LAMPORTS_PER_SOL)
+      console.log("[v0] SOL balance fetched successfully:", balance / LAMPORTS_PER_SOL)
     } catch (error) {
       console.error("[v0] Error fetching SOL balance:", error)
+      setSolBalance(0)
       toast({
         title: "Balance Error",
-        description: "Failed to fetch SOL balance",
+        description: "Failed to fetch SOL balance. Please check your connection.",
         variant: "destructive",
       })
     } finally {
@@ -158,12 +163,12 @@ export function LaunchTokenForm() {
     }
 
     const buyAmountNum = Number.parseFloat(buyAmount)
-    if (!buyAmount || isNaN(buyAmountNum) || buyAmountNum <= 0) {
-      errors.buyAmount = "Buy amount must be greater than 0"
-    } else if (solBalance !== null && buyAmountNum > solBalance) {
-      errors.buyAmount = "Buy amount exceeds your SOL balance"
-    } else if (buyAmountNum < 0.01) {
-      errors.buyAmount = "Minimum buy amount is 0.01 SOL"
+    if (buyAmount && !isNaN(buyAmountNum)) {
+      if (buyAmountNum < 0) {
+        errors.buyAmount = "Buy amount cannot be negative"
+      } else if (solBalance !== null && buyAmountNum > solBalance) {
+        errors.buyAmount = "Buy amount exceeds your SOL balance"
+      }
     }
 
     setValidationErrors(errors)
@@ -592,13 +597,13 @@ export function LaunchTokenForm() {
                 </div>
 
                 <div>
-                  <Label htmlFor="buy-amount">Initial Buy Amount (SOL)</Label>
+                  <Label htmlFor="buy-amount">Initial Buy Amount (SOL) - Optional</Label>
                   <div className="flex items-center gap-2">
                     <Input
                       id="buy-amount"
                       type="number"
                       step="0.01"
-                      min="0.01"
+                      min="0"
                       value={buyAmount}
                       onChange={(e) => {
                         setBuyAmount(e.target.value)
@@ -606,8 +611,7 @@ export function LaunchTokenForm() {
                           setValidationErrors((prev) => ({ ...prev, buyAmount: "" }))
                         }
                       }}
-                      placeholder="0.1"
-                      required
+                      placeholder="0"
                       className={validationErrors.buyAmount ? "border-red-500" : ""}
                     />
                     <span className="text-sm text-muted-foreground min-w-fit">SOL</span>
@@ -616,7 +620,7 @@ export function LaunchTokenForm() {
                     <p className="text-sm text-red-600 mt-1">{validationErrors.buyAmount}</p>
                   )}
                   <p className="text-xs text-muted-foreground mt-1">
-                    Amount of SOL to spend on initial token purchase (minimum 0.01 SOL)
+                    Amount of SOL to spend on initial token purchase (leave empty or 0 for free launch)
                   </p>
                   {solBalance !== null && (
                     <p className="text-xs text-muted-foreground">Available balance: {solBalance.toFixed(4)} SOL</p>
@@ -636,7 +640,9 @@ export function LaunchTokenForm() {
                     ) : (
                       <>
                         <Rocket className="mr-2 h-4 w-4" />
-                        Launch Token ({buyAmount} SOL)
+                        {buyAmount && Number.parseFloat(buyAmount) > 0
+                          ? `Launch Token (${buyAmount} SOL)`
+                          : "Launch Token (Free)"}
                       </>
                     )}
                   </Button>
