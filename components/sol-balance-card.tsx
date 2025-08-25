@@ -1,8 +1,6 @@
 "use client"
 import { useEffect, useState, useCallback } from "react"
 import { useWallet } from "@solana/wallet-adapter-react"
-import { useConnection } from "@solana/wallet-adapter-react"
-import { LAMPORTS_PER_SOL, PublicKey, Connection } from "@solana/web3.js"
 
 function short(pk: string) {
   return pk.slice(0, 4) + "…" + pk.slice(-4)
@@ -10,7 +8,6 @@ function short(pk: string) {
 
 export default function SolBalanceCard() {
   const { publicKey, connected } = useWallet()
-  const { connection } = useConnection()
   const [loading, setLoading] = useState(false)
   const [sol, setSol] = useState<number | null>(null)
   const [err, setErr] = useState<string | null>(null)
@@ -18,59 +15,48 @@ export default function SolBalanceCard() {
   const fetchBalance = useCallback(async () => {
     if (!connected || !publicKey) return
 
-    const fallbackEndpoints = [
-      "https://rpc.helius.xyz/?api-key=public",
-      "https://api.mainnet-beta.solana.com",
-      "https://solana-api.projectserum.com",
-      "https://rpc.ankr.com/solana",
-    ]
-
     try {
       setLoading(true)
       setErr(null)
       console.log("[v0] Fetching SOL balance for:", publicKey.toBase58())
 
-      let lamports: number | null = null
-      let lastError: any = null
+      const response = await fetch("/api/solana", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          method: "getBalance",
+          params: {
+            publicKey: publicKey.toBase58(),
+          },
+        }),
+      })
 
-      // Try primary connection first
-      try {
-        lamports = await connection.getBalance(new PublicKey(publicKey), { commitment: "processed" })
-        console.log("[v0] Primary connection successful, balance:", lamports)
-      } catch (primaryError: any) {
-        console.log("[v0] Primary connection failed:", primaryError.message)
-        lastError = primaryError
-
-        // Try fallback endpoints
-        for (const endpoint of fallbackEndpoints) {
-          try {
-            console.log("[v0] Trying fallback endpoint:", endpoint)
-            const fallbackConnection = new Connection(endpoint, "processed")
-            lamports = await fallbackConnection.getBalance(new PublicKey(publicKey), { commitment: "processed" })
-            console.log("[v0] Fallback connection successful, balance:", lamports)
-            break
-          } catch (fallbackError: any) {
-            console.log("[v0] Fallback endpoint failed:", endpoint, fallbackError.message)
-            lastError = fallbackError
-          }
-        }
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
       }
 
-      if (lamports !== null) {
-        const solBalance = lamports / LAMPORTS_PER_SOL
-        setSol(solBalance)
-        console.log("[v0] Final SOL balance:", solBalance)
+      const data = await response.json()
+
+      if (data.error) {
+        throw new Error(data.error)
+      }
+
+      if (data.success && typeof data.solBalance === "number") {
+        setSol(data.solBalance)
+        console.log("[v0] SOL balance fetched successfully:", data.solBalance)
       } else {
-        throw lastError || new Error("All RPC endpoints failed")
+        throw new Error("Invalid response format")
       }
     } catch (e: any) {
-      console.log("[v0] All balance fetch attempts failed:", e.message)
+      console.log("[v0] Balance fetch failed:", e.message)
       setErr(e?.message ?? String(e))
       setSol(null)
     } finally {
       setLoading(false)
     }
-  }, [connected, publicKey, connection])
+  }, [connected, publicKey])
 
   useEffect(() => {
     fetchBalance()
