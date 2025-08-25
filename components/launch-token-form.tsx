@@ -58,19 +58,70 @@ export function LaunchTokenForm() {
 
     setLoadingBalance(true)
     try {
-      const connection = new Connection("https://api.devnet.solana.com", {
-        commitment: "confirmed",
-        confirmTransactionInitialTimeout: 60000,
+      console.log("[v0] Fetching SOL balance for wallet:", publicKey.toString())
+
+      const rpcEndpoints = [
+        "https://api.mainnet-beta.solana.com",
+        "https://solana-api.projectserum.com",
+        "https://rpc.ankr.com/solana",
+        "https://solana-mainnet.g.alchemy.com/v2/demo",
+      ]
+
+      let balance = 0
+      let successfulEndpoint = ""
+
+      for (const endpoint of rpcEndpoints) {
+        try {
+          console.log("[v0] Trying RPC endpoint:", endpoint)
+
+          const connection = new Connection(endpoint, {
+            commitment: "confirmed",
+            confirmTransactionInitialTimeout: 30000,
+          })
+
+          const balanceResult = await Promise.race([
+            connection.getBalance(publicKey),
+            new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Timeout")), 10000)),
+          ])
+
+          balance = balanceResult
+          successfulEndpoint = endpoint
+          console.log("[v0] Successfully fetched balance from:", endpoint)
+          break
+        } catch (endpointError) {
+          console.log("[v0] Failed with endpoint:", endpoint, endpointError)
+          continue
+        }
+      }
+
+      if (!successfulEndpoint) {
+        throw new Error("All RPC endpoints failed")
+      }
+
+      const solBalance = balance / LAMPORTS_PER_SOL
+
+      console.log("[v0] Raw balance (lamports):", balance)
+      console.log("[v0] Converted balance (SOL):", solBalance)
+      console.log("[v0] Successful RPC endpoint:", successfulEndpoint)
+
+      setSolBalance(solBalance)
+
+      toast({
+        title: "Balance Updated",
+        description: `Current balance: ${solBalance.toFixed(4)} SOL`,
       })
-      const balance = await connection.getBalance(publicKey)
-      setSolBalance(balance / LAMPORTS_PER_SOL)
-      console.log("[v0] SOL balance fetched successfully:", balance / LAMPORTS_PER_SOL)
     } catch (error) {
       console.error("[v0] Error fetching SOL balance:", error)
+      console.error("[v0] Error details:", {
+        message: error instanceof Error ? error.message : "Unknown error",
+        publicKey: publicKey?.toString(),
+        connected,
+      })
+
       setSolBalance(0)
       toast({
         title: "Balance Error",
-        description: "Failed to fetch SOL balance. Please check your connection.",
+        description: "Failed to fetch SOL balance from all RPC endpoints. Please try again.",
         variant: "destructive",
       })
     } finally {

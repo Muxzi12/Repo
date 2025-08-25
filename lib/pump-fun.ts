@@ -58,9 +58,10 @@ export async function uploadMetadata(metadata: TokenMetadata): Promise<string> {
 export async function createPumpFunToken(
   tokenData: PumpFunTokenData,
   creatorPublicKey: string,
+  buyAmount = 0,
 ): Promise<{ transaction: string; tokenData: PumpFunCreateResponse }> {
   try {
-    console.log("[v0] Calling Pump.fun API with data:", tokenData)
+    console.log("[v0] Calling real Pump.fun API with data:", tokenData)
 
     const response = await fetch("/api/pump-fun/create", {
       method: "POST",
@@ -70,22 +71,23 @@ export async function createPumpFunToken(
       body: JSON.stringify({
         ...tokenData,
         creator: creatorPublicKey,
+        buyAmount: buyAmount,
       }),
     })
 
     console.log("[v0] Pump.fun API response status:", response.status)
 
     if (!response.ok) {
-      const errorText = await response.text()
-      console.error("[v0] Pump.fun API error:", errorText)
-      throw new Error(`Failed to create token on Pump.fun: ${response.status} ${errorText}`)
+      const errorData = await response.json()
+      console.error("[v0] Pump.fun API error:", errorData)
+      throw new Error(errorData.details || `Failed to create token on Pump.fun: ${response.status}`)
     }
 
     const result = await response.json()
-    console.log("[v0] Pump.fun API success:", result)
+    console.log("[v0] Real Pump.fun API success:", result)
 
     return {
-      transaction: result.transaction || "",
+      transaction: result.transaction || result.tokenData.signature,
       tokenData: result.tokenData,
     }
   } catch (error) {
