@@ -15,7 +15,7 @@ import { RepoSelector } from "@/components/repo-selector"
 import { WalletButton } from "@/components/wallet-button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { Github, Rocket, Check, Wallet, AlertCircle } from "lucide-react"
+import { Github, Rocket, Check, Wallet, AlertCircle, Upload, X } from "lucide-react"
 import { uploadMetadata, createPumpFunToken, type TokenMetadata } from "@/lib/pump-fun"
 
 interface RepoData {
@@ -40,10 +40,63 @@ export function LaunchTokenForm() {
     description: "",
     imageUrl: "",
   })
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [launchResult, setLaunchResult] = useState<any>(null)
+
+  const handleRepoSelected = (repoData: RepoData) => {
+    setSelectedRepo(repoData)
+    setTokenData((prev) => ({
+      ...prev,
+      name: prev.name || repoData.name,
+      description: prev.description || repoData.description || `Token for ${repoData.name} repository`,
+    }))
+    toast({
+      title: "Repository verified!",
+      description: `${repoData.name} has been successfully verified and selected.`,
+    })
+    setStep(2)
+  }
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"]
+    if (!validTypes.includes(file.type)) {
+      setValidationErrors((prev) => ({
+        ...prev,
+        imageUrl: "Please select a valid image file (JPG, PNG, GIF, or WebP)",
+      }))
+      return
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setValidationErrors((prev) => ({ ...prev, imageUrl: "Image file must be less than 5MB" }))
+      return
+    }
+
+    setImageFile(file)
+
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      setImagePreview(e.target?.result as string)
+    }
+    reader.readAsDataURL(file)
+
+    if (validationErrors.imageUrl) {
+      setValidationErrors((prev) => ({ ...prev, imageUrl: "" }))
+    }
+  }
+
+  const removeImage = () => {
+    setImageFile(null)
+    setImagePreview(null)
+    setTokenData((prev) => ({ ...prev, imageUrl: "" }))
+  }
 
   const validateTokenData = () => {
     const errors: Record<string, string> = {}
@@ -66,26 +119,12 @@ export function LaunchTokenForm() {
       errors.description = "Description must be at least 10 characters"
     }
 
-    if (tokenData.imageUrl && !tokenData.imageUrl.match(/^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)$/i)) {
-      errors.imageUrl = "Please enter a valid image URL"
+    if (tokenData.imageUrl && !tokenData.imageUrl.match(/^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)$/i) && !imageFile) {
+      errors.imageUrl = "Please enter a valid image URL or upload an image file"
     }
 
     setValidationErrors(errors)
     return Object.keys(errors).length === 0
-  }
-
-  const handleRepoSelected = (repoData: RepoData) => {
-    setSelectedRepo(repoData)
-    setTokenData((prev) => ({
-      ...prev,
-      name: prev.name || repoData.name,
-      description: prev.description || repoData.description || `Token for ${repoData.name} repository`,
-    }))
-    toast({
-      title: "Repository verified!",
-      description: `${repoData.name} has been successfully verified and selected.`,
-    })
-    setStep(2)
   }
 
   const handleTokenSubmit = async (e: React.FormEvent) => {
@@ -120,11 +159,22 @@ export function LaunchTokenForm() {
         description: "Uploading metadata to IPFS",
       })
 
+      let imageUrl = tokenData.imageUrl || "/generic-token-logo.png"
+
+      if (imageFile) {
+        const reader = new FileReader()
+        const base64Promise = new Promise<string>((resolve) => {
+          reader.onload = () => resolve(reader.result as string)
+          reader.readAsDataURL(imageFile)
+        })
+        imageUrl = await base64Promise
+      }
+
       const metadata: TokenMetadata = {
         name: tokenData.name,
         symbol: tokenData.symbol,
         description: tokenData.description,
-        image: tokenData.imageUrl || "/generic-token-logo.png",
+        image: imageUrl,
         external_url: selectedRepo.url,
         attributes: [
           {
@@ -160,7 +210,7 @@ export function LaunchTokenForm() {
           name: tokenData.name,
           symbol: tokenData.symbol,
           description: tokenData.description,
-          image: tokenData.imageUrl || "/generic-token-logo.png",
+          image: imageUrl,
           website: selectedRepo.url,
         },
         publicKey.toString(),
@@ -387,20 +437,71 @@ export function LaunchTokenForm() {
                 </div>
 
                 <div>
-                  <Label htmlFor="token-image">Token Image URL (Optional)</Label>
-                  <Input
-                    id="token-image"
-                    type="url"
-                    value={tokenData.imageUrl}
-                    onChange={(e) => {
-                      setTokenData((prev) => ({ ...prev, imageUrl: e.target.value }))
-                      if (validationErrors.imageUrl) {
-                        setValidationErrors((prev) => ({ ...prev, imageUrl: "" }))
-                      }
-                    }}
-                    placeholder="https://example.com/token-image.png"
-                    className={validationErrors.imageUrl ? "border-red-500" : ""}
-                  />
+                  <Label htmlFor="token-image">Token Image (Optional)</Label>
+
+                  {!imagePreview ? (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-center w-full">
+                        <label
+                          htmlFor="token-image"
+                          className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors"
+                        >
+                          <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                            <Upload className="w-8 h-8 mb-2 text-gray-400" />
+                            <p className="mb-2 text-sm text-gray-500">
+                              <span className="font-semibold">Click to upload</span> or drag and drop
+                            </p>
+                            <p className="text-xs text-gray-500">PNG, JPG, GIF or WebP (MAX. 5MB)</p>
+                          </div>
+                          <input
+                            id="token-image"
+                            type="file"
+                            className="hidden"
+                            accept="image/*"
+                            onChange={handleImageUpload}
+                          />
+                        </label>
+                      </div>
+
+                      <div className="text-center text-sm text-gray-500">
+                        <span>or</span>
+                      </div>
+
+                      <Input
+                        type="url"
+                        value={tokenData.imageUrl}
+                        onChange={(e) => {
+                          setTokenData((prev) => ({ ...prev, imageUrl: e.target.value }))
+                          if (validationErrors.imageUrl) {
+                            setValidationErrors((prev) => ({ ...prev, imageUrl: "" }))
+                          }
+                        }}
+                        placeholder="https://example.com/token-image.png"
+                        className={validationErrors.imageUrl ? "border-red-500" : ""}
+                      />
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="relative inline-block">
+                        <img
+                          src={imagePreview || "/placeholder.svg"}
+                          alt="Token preview"
+                          className="w-32 h-32 object-cover rounded-lg border"
+                        />
+                        <button
+                          type="button"
+                          onClick={removeImage}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <p className="text-sm text-gray-600">
+                        {imageFile?.name} ({(imageFile?.size || 0 / 1024 / 1024).toFixed(2)} MB)
+                      </p>
+                    </div>
+                  )}
+
                   {validationErrors.imageUrl && (
                     <p className="text-sm text-red-600 mt-1">{validationErrors.imageUrl}</p>
                   )}
@@ -420,6 +521,29 @@ export function LaunchTokenForm() {
                     <WalletButton />
                   )}
                 </div>
+
+                <Card className="bg-blue-50 border-blue-200">
+                  <CardHeader>
+                    <CardTitle className="text-sm font-medium text-blue-800">Link Preview</CardTitle>
+                    <CardDescription className="text-blue-700">
+                      Your token will be discoverable through these links
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium text-blue-800">Gitr Explore Page</Label>
+                      <div className="p-3 bg-white rounded-md border border-blue-200">
+                        <code className="text-sm text-blue-900 break-all">https://www.gitr.fun/explore</code>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium text-blue-800">GitHub Repository</Label>
+                      <div className="p-3 bg-white rounded-md border border-blue-200">
+                        <code className="text-sm text-blue-900 break-all">{selectedRepo.url}</code>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
                 <div className="flex gap-4 pt-4">
                   <Button type="button" variant="outline" onClick={() => setStep(1)}>
