@@ -111,7 +111,7 @@ importers:
         specifier: latest
         version: 0.7.0(@supabase/supabase-js@2.56.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))
       '@supabase/supabase-js':
-        specifier: latest
+        specifier: ^2.46.2
         version: 2.56.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       autoprefixer:
         specifier: ^10.4.20

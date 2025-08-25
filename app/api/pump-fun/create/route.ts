@@ -1,7 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { Keypair } from "@solana/web3.js"
-import { OffscreenCanvas } from "offscreencanvas"
 
 export async function POST(request: NextRequest) {
   try {
@@ -39,19 +38,11 @@ export async function POST(request: NextRequest) {
       const response = await fetch(image)
       imageFile = await response.blob()
     } else {
-      // Create a simple default image
-      const canvas = new OffscreenCanvas(200, 200)
-      const ctx = canvas.getContext("2d")
-      if (ctx) {
-        ctx.fillStyle = "#6366f1"
-        ctx.fillRect(0, 0, 200, 200)
-        ctx.fillStyle = "white"
-        ctx.font = "24px Arial"
-        ctx.textAlign = "center"
-        ctx.fillText(symbol.substring(0, 3), 100, 110)
-      }
-      const blob = await canvas.convertToBlob({ type: "image/png" })
-      imageFile = blob
+      // This avoids the offscreencanvas dependency that was causing deployment issues
+      const defaultImageData =
+        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChAI9jU77zgAAAABJRU5ErkJggg=="
+      const response = await fetch(defaultImageData)
+      imageFile = await response.blob()
     }
 
     const formData = new FormData()
