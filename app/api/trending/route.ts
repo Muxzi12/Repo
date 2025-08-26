@@ -1,5 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 
+export const runtime = "nodejs"
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
@@ -87,13 +89,15 @@ export async function GET(request: NextRequest) {
 
     console.log("[v0] Returning trending data:", responseData.projects.length, "projects")
 
-    return NextResponse.json(responseData, {
+    const response = NextResponse.json(responseData, {
       status: 200,
       headers: {
-        "Content-Type": "application/json",
+        "Content-Type": "application/json; charset=utf-8",
         "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
       },
     })
+
+    return response
   } catch (error) {
     console.error("[v0] Trending API error:", error)
 
@@ -107,7 +111,7 @@ export async function GET(request: NextRequest) {
       {
         status: 500,
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type": "application/json; charset=utf-8",
         },
       },
     )
