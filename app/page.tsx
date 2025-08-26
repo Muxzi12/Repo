@@ -9,10 +9,6 @@ const RecentLaunches = dynamic(() => import("@/components/recent-launches"), { s
 
 export default async function HomePage() {
   let user = null
-  let totalProjects = 0
-  let totalMarketCap = 0
-  let totalStars = 0
-  let userCount = 0
 
   try {
     const supabase = await createClient()
@@ -20,20 +16,6 @@ export default async function HomePage() {
       data: { user: authUser },
     } = await supabase.auth.getUser()
     user = authUser
-
-    // Get platform stats
-    const { data: projectStats } = await supabase
-      .from("projects")
-      .select("id, repo_verified, usd_market_cap, repo_stars")
-      .eq("repo_verified", true)
-
-    totalProjects = projectStats?.length || 0
-    totalMarketCap = projectStats?.reduce((sum, p) => sum + (p.usd_market_cap || 0), 0) || 0
-    totalStars = projectStats?.reduce((sum, p) => sum + (p.repo_stars || 0), 0) || 0
-
-    // Get unique users count
-    const { count } = await supabase.from("users").select("id", { count: "exact" })
-    userCount = count || 0
   } catch (error) {
     console.log("[v0] Homepage: Database connection failed, using default values")
     // Continue with default values
@@ -43,13 +25,13 @@ export default async function HomePage() {
     <div className="min-h-screen bg-gradient-to-br from-background to-muted">
       <Header user={user} />
 
-      {/* Hero Section */}
-      <section className="container mx-auto px-4 py-16 text-center">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-5xl font-bold mb-6 bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
+      {/* Launch area, centered */}
+      <section className="p-6">
+        <div className="mx-auto max-w-3xl rounded-2xl border bg-white/50 dark:bg-zinc-900/40 backdrop-blur-sm shadow-sm p-6">
+          <h1 className="text-4xl md:text-5xl font-bold mb-6 text-center bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
             Launch Tokens Linked to Your GitHub Repos
           </h1>
-          <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+          <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto text-center">
             Connect your GitHub repositories to Pump.fun and create meme tokens that showcase your development work.
             Build credibility through code, launch tokens through innovation.
           </p>
@@ -72,47 +54,16 @@ export default async function HomePage() {
             <Link href="/gitscreener">
               <Button variant="outline" size="lg" className="text-lg px-8 bg-transparent">
                 <TrendingUp className="mr-2 h-5 w-5" />
-                Explore Projects
+                Gitscreener
               </Button>
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Platform Stats */}
-      <section className="container mx-auto px-4 py-8">
-        <div className="grid md:grid-cols-4 gap-6 mb-16">
-          <Card>
-            <CardContent className="pt-6 text-center">
-              <div className="text-3xl font-bold text-primary mb-2">{totalProjects}</div>
-              <p className="text-sm text-muted-foreground">Active Projects</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6 text-center">
-              <div className="text-3xl font-bold text-primary mb-2">{userCount}</div>
-              <p className="text-sm text-muted-foreground">Developers</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6 text-center">
-              <div className="text-3xl font-bold text-primary mb-2">{totalStars.toLocaleString()}</div>
-              <p className="text-sm text-muted-foreground">GitHub Stars</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6 text-center">
-              <div className="text-3xl font-bold text-primary mb-2">
-                ${totalMarketCap.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-              </div>
-              <p className="text-sm text-muted-foreground">Total Market Cap</p>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-
-      <section>
-        <RecentLaunches />
+      {/* Recent Launches (centered container + visible grid row) */}
+      <section className="pb-10">
+        <RecentLaunches centered />
       </section>
 
       {/* Features Section */}

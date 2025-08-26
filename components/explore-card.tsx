@@ -8,22 +8,13 @@ interface ExploreCardProps {
   symbol: string
   description?: string
   imageUrl?: string
-  mintAddress: string
+  mint: string
   devWallet: string
   createdAt: string
   pumpUrl?: string
 }
 
-export function ExploreCard({
-  name,
-  symbol,
-  description,
-  imageUrl,
-  mintAddress,
-  devWallet,
-  createdAt,
-  pumpUrl,
-}: ExploreCardProps) {
+function ExploreCard({ name, symbol, description, imageUrl, mint, devWallet, createdAt, pumpUrl }: ExploreCardProps) {
   const timeAgo = new Date(createdAt).toLocaleDateString()
 
   return (
@@ -55,7 +46,7 @@ export function ExploreCard({
             <div className="space-y-2 mb-4">
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <span className="font-mono">CA:</span>
-                <span className="font-mono">{shortenAddress(mintAddress)}</span>
+                <span className="font-mono">{shortenAddress(mint)}</span>
               </div>
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <span className="font-mono">Dev:</span>
@@ -74,7 +65,7 @@ export function ExploreCard({
               asChild
             >
               <a
-                href={pumpUrl || `https://pump.fun/${mintAddress}`}
+                href={pumpUrl || `https://pump.fun/${mint}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2"
@@ -89,3 +80,6 @@ export function ExploreCard({
     </Card>
   )
 }
+
+export { ExploreCard }
+export default ExploreCard

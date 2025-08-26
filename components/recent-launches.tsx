@@ -1,9 +1,10 @@
-import { ExploreCard } from "@/components/explore-card"
+import type React from "react"
+import ExploreCard from "@/components/explore-card"
 import { createAdminClient } from "@/lib/supabase/admin"
 
 export const revalidate = 60
 
-export default async function RecentLaunches() {
+export default async function RecentLaunches({ centered = true }: { centered?: boolean }) {
   const supabase = createAdminClient()
   const { data, error } = await supabase
     .from("project_launches")
@@ -17,7 +18,7 @@ export default async function RecentLaunches() {
 
   if (!data?.length) {
     return (
-      <div className="p-10 text-center">
+      <div className={centered ? "p-10 text-center" : "p-6"}>
         <div className="mx-auto mb-3 h-12 w-12 rounded-2xl bg-zinc-100 dark:bg-zinc-800" />
         <div className="text-lg font-medium">No launches yet.</div>
         <p className="mt-1 text-sm text-zinc-500">Launch a token to see it appear here.</p>
@@ -25,9 +26,13 @@ export default async function RecentLaunches() {
     )
   }
 
+  const Wrapper = ({ children }: { children: React.ReactNode }) => (
+    <div className={centered ? "mx-auto max-w-6xl p-6" : "p-6"}>{children}</div>
+  )
+
   return (
-    <div className="p-6">
-      <div className="mb-3 flex items-center justify-between">
+    <Wrapper>
+      <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold">Recent launches</h2>
         <a
           href="/gitscreener"
@@ -44,7 +49,7 @@ export default async function RecentLaunches() {
             name={p.name}
             symbol={p.symbol}
             imageUrl={p.image_url}
-            mintAddress={p.mint}
+            mint={p.mint}
             devWallet={p.dev_wallet}
             pumpUrl={p.pump_url}
             createdAt={p.created_at as any}
@@ -52,6 +57,6 @@ export default async function RecentLaunches() {
           />
         ))}
       </div>
-    </div>
+    </Wrapper>
   )
 }
