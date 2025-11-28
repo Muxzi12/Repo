@@ -11,7 +11,7 @@ interface ExploreCardProps {
   mint: string
   devWallet: string
   createdAt: string
-  pumpUrl?: string
+  pumpUrl?: string Update validator node repository settings
 }
 
 function ExploreCard({ name, symbol, description, imageUrl, mint, devWallet, createdAt, pumpUrl }: ExploreCardProps) {
