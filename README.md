@@ -1,134 +1,124 @@
-# RepoDotFun
+# Gitly
 
-**RepoDotFun** is a lightweight, creator-first GitHub marketplace that lets developers **publish, discover, and sell code** with **crypto-native payments**. Think of it as a bridge between open-source culture and on-chain monetization — without bloated platforms, heavy fees, or unnecessary friction.
+Gitly is a web application that allows users to connect their GitHub account, browse their repositories, and upload selected repository metadata into a database for further use across creator, developer, and launch-based workflows.
 
----
-
-## 🚀 What Is RepoDotFun?
-
-RepoDotFun allows developers to:
-
-* List GitHub repositories, snippets, or templates
-* Sell access using crypto (Sol / USDC)
-* Verify ownership directly from GitHub
-* Deliver code instantly after purchase
-
-The goal is simple: **make code monetizable without ruining open-source culture**.
+The project is designed to be a lightweight foundation for building developer-focused platforms that rely on GitHub identity, repository ownership, and authenticated access.
 
 ---
 
-## 🧠 Core Philosophy
+## Overview
 
-* **Creator-owned** – You control pricing, licensing, and updates
-* **Minimal friction** – No long forms, no approvals, no gatekeeping
-* **On-chain native** – Wallet auth, transparent payments
-* **Fast** – Built for builders who move quickly
+Gitly provides a simple and secure way to:
 
----
+- Authenticate users via GitHub OAuth
+- Access a user’s GitHub repositories with permission
+- Allow users to select repositories they own or contribute to
+- Store repository metadata in a database
+- Build additional features on top of verified GitHub ownership
 
-## ✨ Features
-
-### 🔐 GitHub Verification
-
-* Connect your GitHub account
-* Prove repo ownership automatically
-* Prevent fake listings
-
-### 💸 Crypto Payments
-
-* Accept payments in **SOL / USDC**
-* Instant settlement
-* No chargebacks
-
-### 📦 Instant Delivery
-
-* Buyers get access immediately after payment
-* Repo access, download links, or private branches
-
-### 🧾 Listings & Profiles
-
-* Clean project pages
-* Creator profiles with all listings
-* Tags for discoverability (AI, Web3, Games, Tools, etc.)
+Authentication and session management are handled entirely by Supabase, ensuring a reliable and production-ready OAuth flow without custom callback handling.
 
 ---
 
-## 🧩 Example Use Cases
+## Core Features
 
-* Sell a **Next.js starter**
-* Monetize a **trading bot**
-* License a **game template**
-* Distribute **private tools** or scripts
-* Offer **premium versions** of open-source repos
-
----
-
-## 🛠️ Tech Stack (Planned / In Progress)
-
-* Frontend: Next.js + Tailwind
-* Auth: Wallet-based authentication
-* Payments: Solana (SOL / USDC)
-* Repo Linking: GitHub OAuth
-* Hosting: Vercel
+- GitHub authentication using Supabase Auth
+- Secure OAuth flow with hosted callback
+- Access to public and private repositories based on granted scopes
+- Repository selection and metadata ingestion
+- Database-backed storage with row-level security
+- Clean separation between authentication, data, and UI layers
 
 ---
 
-## 🧪 MVP Scope
+## Tech Stack
 
-The initial version of Gitr focuses on:
-
-* Repo listing
-* Wallet + GitHub linking
-* Fixed-price purchases
-* Manual or automated access delivery
-
-Future versions may expand into:
-
-* Subscriptions
-* Revenue splits
-* Team accounts
-* Private marketplaces
+- Next.js (App Router)
+- TypeScript
+- Supabase (Auth and Database)
+- GitHub OAuth
+- GitHub REST API
 
 ---
 
-## 🗺️ Roadmap
+## Authentication Flow
 
-**Phase 1 – MVP**
+Gitly uses Supabase Auth with the GitHub provider.
 
-* Core listings
-* Payments
-* GitHub verification
+The OAuth process works as follows:
 
-**Phase 2 – Creator Tools**
+1. User clicks "Connect GitHub"
+2. User is redirected to GitHub for authorization
+3. GitHub redirects to Supabase’s hosted callback
+4. Supabase exchanges the authorization code for a session
+5. User is redirected back to the application with an active session
 
-* Analytics dashboard
-* Update notifications
-* Versioned releases
-
-**Phase 3 – Marketplace Growth**
-
-* Search & ranking
-* Featured projects
-* Community curation
+No custom OAuth callback routes are implemented in the application.
 
 ---
 
-## 🧑‍💻 For Developers
+## Repository Access
 
-RepoDotFun is being built openly and iteratively. Feedback, ideas, and experiments are welcome.
+Once authenticated, Gitly retrieves the GitHub access token from the Supabase session and uses it to query the GitHub API.
 
-If you're building tools, templates, or scripts and want a **clean way to monetize without selling out**, Gitr is for you.
+Repository data that may be stored includes:
+
+- Repository ID
+- Name and full name
+- URL
+- Visibility (public or private)
+- Default branch
+- Metadata such as stars and forks
+
+Only metadata is stored by default. Repository source code is not copied unless explicitly implemented.
 
 ---
 
-## ⚠️ Disclaimer
+## Environment Variables
 
-RepoDotFun does not guarantee the quality, security, or legality of listed code. Buyers are responsible for reviewing and understanding what they purchase.
+The following environment variables are required:
+
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+
+These values can be found in the Supabase project dashboard.
 
 ---
 
-## 📬 Contact / Updates
+## Security
 
-More details, demos, and updates coming soon.
+- OAuth tokens are managed by Supabase and not stored manually
+- Row-level security ensures users can only access their own data
+- No private keys or secrets are exposed to the client
+- Authentication state is derived directly from Supabase sessions
 
-> Build fast. Ship code. Get paid.
+---
+
+## Development
+
+To run the project locally:
+
+1. Install dependencies
+2. Configure environment variables
+3. Start the development server
+4. Connect a GitHub account through the UI
+
+GitHub OAuth must be configured in both GitHub Developer Settings and the Supabase dashboard for authentication to function correctly.
+
+---
+
+## Future Extensions
+
+Gitly is designed to be extended with additional features such as:
+
+- Repository-based deployments
+- Token launches tied to GitHub ownership
+- On-chain actions linked to verified repositories
+- Monetization and access control
+- Webhooks for repository updates
+
+---
+
+## License
+
+This project is provided as-is. Licensing can be added based on project requirements.
