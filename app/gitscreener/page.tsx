@@ -19,7 +19,7 @@ async function GitscreenerContent() {
       .order("created_at", { ascending: false })
       .limit(50)
 
-    if (error) {
+    if (error) { Price Charting
       console.error("[v0] Supabase error:", error)
       return (
         <div className="p-6 text-center">
