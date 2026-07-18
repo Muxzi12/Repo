@@ -1,6 +1,6 @@
 Base Set Unlimited
 
-Base Set Unlimited is an on-chain collectible trading protocol built on Solana that allows users to trade tokenized collectible markets using real-world trading card prices as oracle data.
+Base Set Unlimited is an on-chain collectible trading protocol built on Robinhood that allows users to trade tokenized collectible markets using real-world trading card prices as oracle data.
 
 Markets are powered by live pricing feeds aggregated from PriceCharting and reflected directly into on-chain spot markets.
 
@@ -89,9 +89,9 @@ supply and demand
 liquidity depth
 trading activity
 protocol pricing mechanics
-Why Solana
+Why Hood
 
-Base Set Unlimited is built on Solana for:
+Base Set Unlimited is built on Hood for:
 
 low fees
 fast execution
@@ -101,7 +101,7 @@ seamless wallet integration
 
 Infrastructure stack:
 
-Solana
+Hood
 Anchor
 Helius RPC
 TradingView Lightweight Charts
