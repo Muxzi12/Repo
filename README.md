@@ -23,7 +23,7 @@ Trophy Cards
 
 Users are not purchasing the physical card itself.
 
-Instead, they are trading tokenized exposure to collectible prices through Solana-native spot markets.
+Instead, they are trading tokenized exposure to collectible prices through Robinhood-native spot markets.
 
 Oracle Pricing
 
@@ -81,7 +81,7 @@ hold
 trade
 provide liquidity
 
-through fully on-chain Solana markets.
+through fully on-chain  markets.
 
 Market prices move dynamically around the oracle price based on:
 
